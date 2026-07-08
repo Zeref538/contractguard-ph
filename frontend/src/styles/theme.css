@@ -19,6 +19,11 @@
   --border: oklch(0.869 0.02 252.89); /* #CBD5E1 */
   --input: oklch(0.869 0.02 252.89);
   --ring: oklch(0.379 0.146 265.52);
+  --bokeh:
+    radial-gradient(circle 340px at 10% 12%, oklch(0.585 0.13 277 / 0.1), transparent 60%),
+    radial-gradient(circle 240px at 90% 8%, oklch(0.62 0.15 300 / 0.08), transparent 60%),
+    radial-gradient(circle 300px at 82% 70%, oklch(0.585 0.13 277 / 0.08), transparent 62%),
+    radial-gradient(circle 200px at 25% 88%, oklch(0.66 0.14 330 / 0.06), transparent 60%);
   --chart-1: oklch(0.646 0.222 41.116);
   --chart-2: oklch(0.6 0.118 184.704);
   --chart-3: oklch(0.398 0.07 227.392);
@@ -55,6 +60,14 @@
   --border: oklch(1 0 0 / 8%);
   --input: oklch(1 0 0 / 10%);
   --ring: oklch(0.585 0.13 277);
+  --bokeh:
+    radial-gradient(circle 340px at 10% 12%, oklch(0.585 0.13 277 / 0.18), transparent 60%),
+    radial-gradient(circle 240px at 90% 8%, oklch(0.62 0.15 300 / 0.13), transparent 60%),
+    radial-gradient(circle 300px at 82% 70%, oklch(0.585 0.13 277 / 0.14), transparent 62%),
+    radial-gradient(circle 200px at 25% 88%, oklch(0.66 0.14 330 / 0.11), transparent 60%),
+    radial-gradient(circle 150px at 55% 35%, oklch(0.585 0.13 277 / 0.09), transparent 55%),
+    radial-gradient(circle 120px at 95% 45%, oklch(0.62 0.15 300 / 0.11), transparent 55%),
+    radial-gradient(circle 90px at 40% 55%, oklch(0.7 0.13 320 / 0.1), transparent 55%);
   --chart-1: oklch(0.488 0.243 264.376);
   --chart-2: oklch(0.696 0.17 162.48);
   --chart-3: oklch(0.769 0.188 70.08);
