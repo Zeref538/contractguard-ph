@@ -1,4 +1,4 @@
-# ContractGuard PH
+# Aegix AI
 
 **Philippine employment contract compliance checker.** Upload an employment
 contract PDF; get a fixed-schema report grading each clause — **Compliant /

@@ -1,4 +1,5 @@
 const API_BASE = import.meta.env.VITE_API_URL ?? 'http://localhost:8000'
+// Aegix AI — frontend API client
 
 export type Verdict = 'Compliant' | 'Non-compliant' | 'Vague' | 'Missing'
 

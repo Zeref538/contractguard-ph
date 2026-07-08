@@ -17,10 +17,10 @@ export function Wordmark({ className }: { className?: string }) {
       <LogoMark className='size-8 shrink-0' />
       <div className='leading-none'>
         <p className='text-[15px] font-semibold tracking-tight'>
-          ContractGuard <span className='text-primary'>PH</span>
+          Aegix <span className='text-primary'>AI</span>
         </p>
         <p className='text-muted-foreground mt-1 text-[11px]'>
-          Labor Code compliance
+          PH contract compliance
         </p>
       </div>
     </div>

@@ -104,7 +104,9 @@ export function App() {
             <Menu className='size-5' />
           </button>
           <LogoMark className='size-7' />
-          <span className='text-sm font-semibold'>ContractGuard PH</span>
+          <span className='text-sm font-semibold'>
+            Aegix <span className='text-primary'>AI</span>
+          </span>
         </header>
 
         <main className='mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6 lg:py-12'>

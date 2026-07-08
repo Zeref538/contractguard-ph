@@ -43,10 +43,13 @@ export function SignInScreen() {
   return (
     <div className='mx-auto flex min-h-svh max-w-sm flex-col justify-center px-6 py-12'>
       <div className='mb-8 flex flex-col items-center text-center'>
-        <div className='relative mb-5'>
+        <div className='relative mb-4'>
           <div className='bg-primary/25 absolute inset-0 rounded-full blur-2xl' />
           <LogoMark className='relative size-14' />
         </div>
+        <p className='mb-3 text-lg font-semibold tracking-tight'>
+          Aegix <span className='text-primary'>AI</span>
+        </p>
         <h1 className='text-2xl font-semibold tracking-tight'>
           {mode === 'signin' ? 'Welcome back' : 'Create your account'}
         </h1>

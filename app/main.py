@@ -10,9 +10,9 @@ from app.schemas import ComplianceReport
 MAX_PDF_BYTES = 10 * 1024 * 1024
 
 app = FastAPI(
-    title="ContractGuard PH",
-    description="Philippine employment contract compliance checker. "
-    "Not legal advice.",
+    title="Aegix AI",
+    description="Aegix AI — Philippine employment contract compliance "
+    "checker. Not legal advice.",
 )
 
 app.add_middleware(
