@@ -15,6 +15,19 @@
   }
   body {
     @apply min-h-svh w-full bg-background text-foreground has-[div[data-variant='inset']]:bg-sidebar;
+    /* Cinematic ambient glow: indigo halos over near-black */
+    background-image:
+      radial-gradient(
+        60rem 32rem at 50% -8rem,
+        oklch(0.585 0.13 277 / 0.13),
+        transparent 70%
+      ),
+      radial-gradient(
+        44rem 26rem at 88% 112%,
+        oklch(0.585 0.13 277 / 0.07),
+        transparent 70%
+      );
+    background-attachment: fixed;
   }
 
   /* Override Radix scroll locking for sticky headers */
