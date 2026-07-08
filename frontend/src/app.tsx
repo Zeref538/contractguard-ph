@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react'
+import { Scale } from 'lucide-react'
 import { analyzeContract, type ComplianceReport } from './lib/api'
 import { UploadScreen } from './screens/upload'
 import { ReportScreen } from './screens/report'
@@ -31,18 +32,37 @@ export function App() {
   }
 
   return (
-    <main className='mx-auto max-w-5xl px-4 py-10'>
-      <header className='mb-8'>
-        <h1 className='text-2xl font-bold tracking-tight'>ContractGuard PH</h1>
-        <p className='text-muted-foreground text-sm'>
-          Philippine employment contract compliance checker — not legal advice.
-        </p>
+    <div className='flex min-h-svh flex-col'>
+      <header className='border-b bg-card'>
+        <div className='mx-auto flex w-full max-w-6xl items-center gap-3 px-4 py-4 sm:px-6'>
+          <div className='bg-primary text-primary-foreground flex size-10 items-center justify-center rounded-lg'>
+            <Scale className='size-5' aria-hidden />
+          </div>
+          <div>
+            <p className='font-serif text-xl leading-tight font-semibold tracking-tight'>
+              ContractGuard <span className='text-accent'>PH</span>
+            </p>
+            <p className='text-muted-foreground text-xs'>
+              Employment contract compliance · Philippine Labor Code
+            </p>
+          </div>
+        </div>
       </header>
-      {report ? (
-        <ReportScreen report={report} onReset={reset} />
-      ) : (
-        <UploadScreen onUpload={handleUpload} loading={loading} error={error} />
-      )}
-    </main>
+
+      <main className='mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6'>
+        {report ? (
+          <ReportScreen report={report} onReset={reset} />
+        ) : (
+          <UploadScreen onUpload={handleUpload} loading={loading} error={error} />
+        )}
+      </main>
+
+      <footer className='border-t'>
+        <div className='text-muted-foreground mx-auto w-full max-w-6xl px-4 py-4 text-xs sm:px-6'>
+          ContractGuard PH is an automated screening tool, not legal advice.
+          Consult a qualified Philippine labor lawyer for binding guidance.
+        </div>
+      </footer>
+    </div>
   )
 }
