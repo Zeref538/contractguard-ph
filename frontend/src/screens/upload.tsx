@@ -1,18 +1,18 @@
 import { useRef, useState, type DragEvent } from 'react'
 import {
-  AlertCircle,
-  Banknote,
+  WarningCircle,
+  Money,
   Clock,
-  FileUp,
+  FileArrowUp,
   Gavel,
-  HeartPulse,
+  Heartbeat,
   Hourglass,
   Lightbulb,
-  ScanLine,
-  ScrollText,
-  UploadCloud,
-  UserX,
-} from 'lucide-react'
+  Scan,
+  Scroll,
+  UploadSimple,
+  UserMinus,
+} from '@phosphor-icons/react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { ScanningLoader } from '@/components/scanning-loader'
 import { cn } from '@/lib/utils'
@@ -25,23 +25,23 @@ interface Props {
 
 const CHECKS = [
   { icon: Hourglass, label: 'Probation period', law: 'Art. 296' },
-  { icon: UserX, label: 'Termination & notice', law: 'Arts. 294–302' },
-  { icon: Banknote, label: 'Pay & 13th month', law: 'PD 851 · MO 28' },
-  { icon: HeartPulse, label: 'SSS · PhilHealth · Pag-IBIG', law: 'RA 11199 +' },
+  { icon: UserMinus, label: 'Termination & notice', law: 'Arts. 294–302' },
+  { icon: Money, label: 'Pay & 13th month', law: 'PD 851 · MO 28' },
+  { icon: Heartbeat, label: 'SSS · PhilHealth · Pag-IBIG', law: 'RA 11199 +' },
   { icon: Clock, label: 'Hours & overtime', law: 'Arts. 83–96' },
   { icon: Lightbulb, label: 'IP ownership', law: 'RA 8293' },
   { icon: Gavel, label: 'Dispute resolution', law: 'Art. 224' },
 ]
 
 const STEPS = [
-  { icon: FileUp, title: 'Upload', body: 'Drop in a text-based contract PDF.' },
+  { icon: FileArrowUp, title: 'Upload', body: 'Drop in a text-based contract PDF.' },
   {
-    icon: ScanLine,
+    icon: Scan,
     title: 'Scan',
     body: 'Each clause is checked against the Labor Code.',
   },
   {
-    icon: ScrollText,
+    icon: Scroll,
     title: 'Report',
     body: 'Get verdicts with citations & plain-English reasons.',
   },
@@ -85,7 +85,7 @@ export function UploadScreen({ onUpload, loading, error }: Props) {
 
           {error && (
             <Alert variant='destructive' className='mt-5'>
-              <AlertCircle className='size-4' aria-hidden />
+              <WarningCircle className='size-4' aria-hidden />
               <AlertTitle>Analysis failed</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
@@ -112,7 +112,7 @@ export function UploadScreen({ onUpload, loading, error }: Props) {
           >
             <div className='bg-primary/20 pointer-events-none absolute -top-16 left-1/2 h-32 w-72 -translate-x-1/2 rounded-full opacity-0 blur-3xl transition-opacity duration-300 group-hover:opacity-100' />
             <div className='border-border/80 bg-secondary/80 text-primary flex size-13 items-center justify-center rounded-xl border'>
-              <UploadCloud className='size-6' aria-hidden />
+              <UploadSimple className='size-6' aria-hidden />
             </div>
             <div>
               <p className='font-medium'>

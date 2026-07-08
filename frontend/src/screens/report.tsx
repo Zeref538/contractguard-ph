@@ -1,11 +1,11 @@
 import {
-  AlertTriangle,
+  Warning,
   BookOpen,
-  CheckCircle2,
-  CircleOff,
-  HelpCircle,
-  RotateCcw,
-} from 'lucide-react'
+  CheckCircle,
+  Prohibit,
+  Question,
+  ArrowCounterClockwise,
+} from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import type { ClauseReport, ComplianceReport, Verdict } from '@/lib/api'
@@ -13,7 +13,7 @@ import type { ClauseReport, ComplianceReport, Verdict } from '@/lib/api'
 const VERDICT_META: Record<
   Verdict,
   {
-    icon: typeof CheckCircle2
+    icon: typeof CheckCircle
     text: string
     chip: string
     bar: string
@@ -22,7 +22,7 @@ const VERDICT_META: Record<
   }
 > = {
   'Non-compliant': {
-    icon: AlertTriangle,
+    icon: Warning,
     text: 'text-red-400',
     chip: 'bg-red-500/10 text-red-400 border-red-500/25',
     bar: 'bg-red-500',
@@ -30,7 +30,7 @@ const VERDICT_META: Record<
     blurb: 'Conflicts with the law',
   },
   Missing: {
-    icon: CircleOff,
+    icon: Prohibit,
     text: 'text-zinc-300',
     chip: 'bg-zinc-500/10 text-zinc-300 border-zinc-500/25',
     bar: 'bg-zinc-400',
@@ -38,7 +38,7 @@ const VERDICT_META: Record<
     blurb: 'Not addressed in the contract',
   },
   Vague: {
-    icon: HelpCircle,
+    icon: Question,
     text: 'text-amber-400',
     chip: 'bg-amber-500/10 text-amber-400 border-amber-500/25',
     bar: 'bg-amber-500',
@@ -46,7 +46,7 @@ const VERDICT_META: Record<
     blurb: 'Too imprecise to verify',
   },
   Compliant: {
-    icon: CheckCircle2,
+    icon: CheckCircle,
     text: 'text-emerald-400',
     chip: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/25',
     bar: 'bg-emerald-500',
@@ -107,7 +107,7 @@ export function ReportScreen({
           </p>
         </div>
         <Button variant='outline' onClick={onReset} className='gap-2'>
-          <RotateCcw className='size-4' aria-hidden />
+          <ArrowCounterClockwise className='size-4' aria-hidden />
           Check another
         </Button>
       </div>

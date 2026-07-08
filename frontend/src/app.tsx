@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Menu } from 'lucide-react'
+import { List } from '@phosphor-icons/react'
 import { analyzeContract, type ComplianceReport } from './lib/api'
 import { useAuth } from './lib/auth'
 import {
@@ -101,7 +101,7 @@ export function App() {
             aria-label='Open menu'
             className='text-muted-foreground hover:text-foreground'
           >
-            <Menu className='size-5' />
+            <List className='size-5' />
           </button>
           <LogoMark className='size-7' />
           <span className='text-sm font-semibold'>

@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react'
 import {
-  ChevronDown,
+  CaretDown,
   FileText,
-  LogOut,
+  SignOut,
   Plus,
-  ShieldAlert,
-  Trash2,
+  ShieldWarning,
   Trash,
+  TrashSimple,
   X,
-} from 'lucide-react'
+} from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Wordmark } from '@/components/logo'
 import { cn } from '@/lib/utils'
@@ -88,7 +88,7 @@ export function Sidebar({
         <nav className='mt-4 flex-1 overflow-y-auto px-3 pb-4'>
           {history.length === 0 ? (
             <div className='text-muted-foreground mt-8 px-2 text-center text-xs'>
-              <ShieldAlert className='mx-auto mb-2 size-6 opacity-50' />
+              <ShieldWarning className='mx-auto mb-2 size-6 opacity-50' />
               No reviews yet. Upload a contract to get started.
             </div>
           ) : (
@@ -138,7 +138,7 @@ export function Sidebar({
                             aria-label={`Delete ${item.filename}`}
                             className='text-muted-foreground hover:text-destructive shrink-0 opacity-0 transition-opacity group-hover:opacity-100'
                           >
-                            <Trash2 className='size-3.5' />
+                            <TrashSimple className='size-3.5' />
                           </button>
                         </div>
                       </li>
@@ -171,7 +171,7 @@ export function Sidebar({
                   }}
                   className='hover:bg-secondary text-destructive flex w-full items-center gap-2 px-3 py-2.5 text-left text-sm'
                 >
-                  <LogOut className='size-4' />
+                  <SignOut className='size-4' />
                   Sign out
                 </button>
               </div>
@@ -189,7 +189,7 @@ export function Sidebar({
                   {user.email}
                 </p>
               </div>
-              <ChevronDown
+              <CaretDown
                 className={cn(
                   'text-muted-foreground size-4 shrink-0 transition-transform',
                   menuOpen && 'rotate-180'

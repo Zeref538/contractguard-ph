@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { ArrowRight, Eye, EyeOff } from 'lucide-react'
+import { ArrowRight, Eye, EyeSlash } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { LogoMark } from '@/components/logo'
@@ -113,7 +113,7 @@ export function SignInScreen() {
               className='text-muted-foreground hover:text-foreground absolute inset-y-0 right-0 flex w-10 items-center justify-center'
             >
               {show ? (
-                <EyeOff className='size-4' />
+                <EyeSlash className='size-4' />
               ) : (
                 <Eye className='size-4' />
               )}

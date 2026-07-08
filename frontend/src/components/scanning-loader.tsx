@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { AlertTriangle, Check, FileSearch } from 'lucide-react'
+import { Warning, Check, FileMagnifyingGlass } from '@phosphor-icons/react'
 import { cn } from '@/lib/utils'
 
 type Flag = 'ok' | 'warn' | 'bad'
@@ -31,8 +31,8 @@ const STEPS = [
 
 const FLAG_STYLE: Record<Flag, { icon: typeof Check; cls: string }> = {
   ok: { icon: Check, cls: 'bg-emerald-500 text-white' },
-  warn: { icon: AlertTriangle, cls: 'bg-amber-500 text-white' },
-  bad: { icon: AlertTriangle, cls: 'bg-red-500 text-white' },
+  warn: { icon: Warning, cls: 'bg-amber-500 text-white' },
+  bad: { icon: Warning, cls: 'bg-red-500 text-white' },
 }
 
 export function ScanningLoader() {
@@ -62,7 +62,7 @@ export function ScanningLoader() {
         <div className='border-border/70 bg-card relative h-[264px] overflow-hidden rounded-xl border shadow-xl'>
           {/* Paper header */}
           <div className='border-border/60 flex items-center gap-2 border-b px-4 py-2.5'>
-            <FileSearch className='text-primary size-3.5' />
+            <FileMagnifyingGlass className='text-primary size-3.5' />
             <div className='bg-muted-foreground/30 h-1.5 w-20 rounded-full' />
           </div>
 
@@ -94,7 +94,7 @@ export function ScanningLoader() {
                         meta.cls
                       )}
                     >
-                      <Icon className='size-2.5' strokeWidth={3} />
+                      <Icon className='size-2.5' weight='bold' />
                     </span>
                   )}
                 </div>
