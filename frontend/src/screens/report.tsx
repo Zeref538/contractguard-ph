@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import {
   Warning,
   BookOpen,
@@ -74,6 +75,8 @@ export function ReportScreen({
   report: ComplianceReport
   onReset: () => void
 }) {
+  const [filter, setFilter] = useState<Verdict | 'All'>('All')
+
   const counts = report.clauses.reduce<Record<string, number>>((acc, c) => {
     acc[c.verdict] = (acc[c.verdict] ?? 0) + 1
     return acc
@@ -83,6 +86,12 @@ export function ReportScreen({
   const ordered = [...report.clauses].sort(
     (a, b) => SEVERITY.indexOf(a.verdict) - SEVERITY.indexOf(b.verdict)
   )
+  const visible =
+    filter === 'All' ? ordered : ordered.filter((c) => c.verdict === filter)
+
+  function toggle(v: Verdict) {
+    setFilter((f) => (f === v ? 'All' : v))
+  }
 
   return (
     <div className='space-y-8'>
@@ -112,15 +121,22 @@ export function ReportScreen({
         </Button>
       </div>
 
-      {/* Summary tiles */}
+      {/* Summary tiles — clickable to filter */}
       <dl className='grid grid-cols-2 gap-3 lg:grid-cols-4'>
         {SEVERITY.map((v) => {
           const meta = VERDICT_META[v]
           const Icon = meta.icon
+          const active = filter === v
           return (
-            <div
+            <button
               key={v}
-              className='border-border/70 bg-card/60 relative overflow-hidden rounded-xl border p-4 backdrop-blur-sm'
+              type='button'
+              onClick={() => toggle(v)}
+              aria-pressed={active}
+              className={cn(
+                'border-border/70 bg-card/60 relative overflow-hidden rounded-xl border p-4 text-left backdrop-blur-sm transition-all hover:border-primary/40',
+                active && 'ring-primary border-primary/50 ring-2'
+              )}
             >
               <div
                 className={cn(
@@ -140,14 +156,34 @@ export function ReportScreen({
               >
                 {counts[v] ?? 0}
               </dd>
-            </div>
+            </button>
           )
         })}
       </dl>
 
+      {/* Filter chips */}
+      <div className='flex flex-wrap items-center gap-2'>
+        <FilterChip
+          label='All'
+          count={report.clauses.length}
+          active={filter === 'All'}
+          onClick={() => setFilter('All')}
+        />
+        {SEVERITY.filter((v) => counts[v]).map((v) => (
+          <FilterChip
+            key={v}
+            label={v}
+            count={counts[v]}
+            active={filter === v}
+            dot={VERDICT_META[v].bar}
+            onClick={() => toggle(v)}
+          />
+        ))}
+      </div>
+
       {/* Clause findings as readable cards */}
       <div className='space-y-4'>
-        {ordered.map((clause, i) => (
+        {visible.map((clause, i) => (
           <ClauseCard key={i} clause={clause} />
         ))}
       </div>
@@ -156,6 +192,38 @@ export function ReportScreen({
         {report.disclaimer}
       </p>
     </div>
+  )
+}
+
+function FilterChip({
+  label,
+  count,
+  active,
+  dot,
+  onClick,
+}: {
+  label: string
+  count: number
+  active: boolean
+  dot?: string
+  onClick: () => void
+}) {
+  return (
+    <button
+      type='button'
+      onClick={onClick}
+      aria-pressed={active}
+      className={cn(
+        'flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors',
+        active
+          ? 'border-primary bg-primary/15 text-foreground'
+          : 'border-border/70 text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
+      )}
+    >
+      {dot && <span className={cn('size-2 rounded-full', dot)} />}
+      {label}
+      <span className='tabular-nums opacity-70'>{count}</span>
+    </button>
   )
 }
 
