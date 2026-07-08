@@ -1,13 +1,15 @@
-"""FastAPI app: POST /analyze — upload a contract PDF, get a compliance report."""
+"""FastAPI app: POST /analyze — upload a contract file, or POST /analyze-text."""
 
-from fastapi import FastAPI, File, HTTPException, UploadFile
+from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
+from pydantic import BaseModel
 
 from app.ingest import EmptyPdfError
-from app.pipeline import analyze_contract
+from app.pipeline import analyze_contract, analyze_text
 from app.schemas import ComplianceReport
 
-MAX_PDF_BYTES = 10 * 1024 * 1024
+MAX_BYTES = 10 * 1024 * 1024
+ALLOWED_EXTS = (".pdf", ".docx", ".doc", ".txt", ".md")
 
 app = FastAPI(
     title="Aegix AI",
@@ -23,6 +25,11 @@ app.add_middleware(
 )
 
 
+class TextRequest(BaseModel):
+    text: str
+    filename: str = "Pasted text"
+
+
 @app.get("/health")
 def health() -> dict:
     return {"status": "ok"}
@@ -30,12 +37,23 @@ def health() -> dict:
 
 @app.post("/analyze", response_model=ComplianceReport)
 async def analyze(file: UploadFile = File(...)) -> ComplianceReport:
-    if file.content_type not in ("application/pdf", "application/octet-stream"):
-        raise HTTPException(415, "Please upload a PDF file.")
-    pdf_bytes = await file.read()
-    if len(pdf_bytes) > MAX_PDF_BYTES:
-        raise HTTPException(413, "PDF is larger than 10 MB.")
+    name = file.filename or "contract.pdf"
+    if not name.lower().endswith(ALLOWED_EXTS):
+        raise HTTPException(415, "Upload a PDF, Word (.docx), or text file.")
+    data = await file.read()
+    if len(data) > MAX_BYTES:
+        raise HTTPException(413, "File is larger than 10 MB.")
     try:
-        return analyze_contract(pdf_bytes, file.filename or "contract.pdf")
+        return analyze_contract(data, name)
+    except EmptyPdfError as e:
+        raise HTTPException(422, str(e))
+
+
+@app.post("/analyze-text", response_model=ComplianceReport)
+async def analyze_pasted(req: TextRequest) -> ComplianceReport:
+    if len(req.text) > MAX_BYTES:
+        raise HTTPException(413, "Text is too long.")
+    try:
+        return analyze_text(req.text, req.filename or "Pasted text")
     except EmptyPdfError as e:
         raise HTTPException(422, str(e))

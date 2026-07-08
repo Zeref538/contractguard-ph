@@ -53,7 +53,7 @@ def main() -> None:
 
     for name in names:
         pdf = (EVAL_DIR / "contracts" / f"{name}.pdf").read_bytes()
-        report = analyze_contract(pdf, name)
+        report = analyze_contract(pdf, name + ".pdf")
         got = {c.clause_type.value: c for c in report.clauses}
         truth = ground_truth[name]
 

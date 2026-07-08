@@ -1,8 +1,8 @@
-"""End-to-end analysis pipeline: PDF bytes -> ComplianceReport."""
+"""End-to-end analysis pipeline: document/text -> ComplianceReport."""
 
 from langchain_core.language_models import BaseChatModel
 
-from app.ingest import extract_text
+from app.ingest import clean_pasted_text, extract_text
 from app.retriever import retrieve_rules
 from app.schemas import (
     REQUIRED_CATEGORIES,
@@ -56,9 +56,20 @@ MISSING_RULES: dict[ClauseCategory, tuple[str, str]] = {
 }
 
 
-def analyze_contract(pdf_bytes: bytes, filename: str,
+def analyze_contract(data: bytes, filename: str,
                      llm: BaseChatModel | None = None) -> ComplianceReport:
-    text = extract_text(pdf_bytes)
+    """Analyze an uploaded document (PDF/DOCX/TXT)."""
+    return _analyze(extract_text(data, filename), filename, llm)
+
+
+def analyze_text(text: str, filename: str = "Pasted text",
+                 llm: BaseChatModel | None = None) -> ComplianceReport:
+    """Analyze contract text pasted directly by the user."""
+    return _analyze(clean_pasted_text(text), filename, llm)
+
+
+def _analyze(text: str, filename: str,
+             llm: BaseChatModel | None) -> ComplianceReport:
     segmented = segment_contract(text, llm)
 
     reports: list[ClauseReport] = []

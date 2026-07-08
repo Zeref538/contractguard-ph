@@ -10,14 +10,18 @@ import {
   Lightbulb,
   Scan,
   Scroll,
+  TextAlignLeft,
   UserMinus,
+  PaperPlaneTilt,
 } from '@phosphor-icons/react'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import { Button } from '@/components/ui/button'
 import { ScanningLoader } from '@/components/scanning-loader'
 import { cn } from '@/lib/utils'
 
 interface Props {
   onUpload: (file: File) => void
+  onAnalyzeText: (text: string) => void
   loading: boolean
   error: string | null
 }
@@ -33,7 +37,11 @@ const CHECKS = [
 ]
 
 const STEPS = [
-  { icon: FileArrowUp, title: 'Upload', body: 'Drop in a text-based contract PDF.' },
+  {
+    icon: FileArrowUp,
+    title: 'Add your contract',
+    body: 'Upload a file or paste the text.',
+  },
   {
     icon: Scan,
     title: 'Scan',
@@ -46,9 +54,16 @@ const STEPS = [
   },
 ]
 
-export function UploadScreen({ onUpload, loading, error }: Props) {
+export function UploadScreen({
+  onUpload,
+  onAnalyzeText,
+  loading,
+  error,
+}: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [dragging, setDragging] = useState(false)
+  const [mode, setMode] = useState<'file' | 'text'>('file')
+  const [text, setText] = useState('')
 
   function pick(files: FileList | null) {
     const file = files?.[0]
@@ -66,7 +81,7 @@ export function UploadScreen({ onUpload, loading, error }: Props) {
   return (
     <div className='space-y-10'>
       <div className='grid items-start gap-8 lg:grid-cols-[1.35fr_1fr]'>
-        {/* Left: hero + dropzone */}
+        {/* Left: hero + input */}
         <section>
           <p className='text-primary mb-3 text-xs font-semibold tracking-[0.18em] uppercase'>
             Philippine employment contracts
@@ -78,58 +93,112 @@ export function UploadScreen({ onUpload, loading, error }: Props) {
             </span>
           </h1>
           <p className='text-muted-foreground mt-3 max-w-md text-[15px] leading-relaxed'>
-            Upload a contract PDF and get a clause-by-clause verdict — every
-            finding cited to the Labor Code or the governing statute.
+            Add your contract as a PDF or Word file, or paste the text — Aegix
+            checks each clause and cites the Labor Code or the governing
+            statute behind every verdict.
           </p>
 
+          {/* Mode toggle */}
+          <div className='bg-secondary/60 mt-6 inline-flex rounded-lg border p-1'>
+            {(['file', 'text'] as const).map((m) => (
+              <button
+                key={m}
+                onClick={() => setMode(m)}
+                className={cn(
+                  'flex items-center gap-1.5 rounded-md px-3 py-1.5 text-sm font-medium transition-colors',
+                  mode === m
+                    ? 'bg-background text-foreground shadow-sm'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {m === 'file' ? (
+                  <FileArrowUp className='size-4' />
+                ) : (
+                  <TextAlignLeft className='size-4' />
+                )}
+                {m === 'file' ? 'Upload file' : 'Paste text'}
+              </button>
+            ))}
+          </div>
+
           {error && (
-            <Alert variant='destructive' className='mt-5'>
+            <Alert variant='destructive' className='mt-4'>
               <WarningCircle className='size-4' aria-hidden />
               <AlertTitle>Analysis failed</AlertTitle>
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
-          <div
-            role='button'
-            tabIndex={0}
-            aria-label='Upload a contract PDF'
-            onClick={() => inputRef.current?.click()}
-            onKeyDown={(e) => e.key === 'Enter' && inputRef.current?.click()}
-            onDragOver={(e) => {
-              e.preventDefault()
-              setDragging(true)
-            }}
-            onDragLeave={() => setDragging(false)}
-            onDrop={onDrop}
-            className={cn(
-              'group border-border bg-card/60 relative mt-6 flex cursor-pointer flex-col items-center gap-3 overflow-hidden rounded-2xl border px-6 py-12 text-center backdrop-blur-sm transition-all duration-200',
-              'hover:border-primary/50',
-              'focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
-              dragging && 'border-primary bg-primary/10'
-            )}
-          >
-            <div className='bg-primary/20 pointer-events-none absolute -top-16 left-1/2 h-32 w-72 -translate-x-1/2 rounded-full opacity-0 blur-3xl transition-opacity duration-300 group-hover:opacity-100' />
-            <div className='border-border/80 bg-secondary/80 text-primary flex size-13 items-center justify-center rounded-xl border'>
-              <FileArrowUp className='size-6' weight='bold' aria-hidden />
+          {mode === 'file' ? (
+            <>
+              <div
+                role='button'
+                tabIndex={0}
+                aria-label='Upload a contract file'
+                onClick={() => inputRef.current?.click()}
+                onKeyDown={(e) =>
+                  e.key === 'Enter' && inputRef.current?.click()
+                }
+                onDragOver={(e) => {
+                  e.preventDefault()
+                  setDragging(true)
+                }}
+                onDragLeave={() => setDragging(false)}
+                onDrop={onDrop}
+                className={cn(
+                  'group border-border bg-card/60 relative mt-4 flex cursor-pointer flex-col items-center gap-3 overflow-hidden rounded-2xl border px-6 py-12 text-center backdrop-blur-sm transition-all duration-200',
+                  'hover:border-primary/50',
+                  'focus-visible:ring-ring focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:outline-none',
+                  dragging && 'border-primary bg-primary/10'
+                )}
+              >
+                <div className='bg-primary/20 pointer-events-none absolute -top-16 left-1/2 h-32 w-72 -translate-x-1/2 rounded-full opacity-0 blur-3xl transition-opacity duration-300 group-hover:opacity-100' />
+                <div className='border-border/80 bg-secondary/80 text-primary flex size-13 items-center justify-center rounded-xl border'>
+                  <FileArrowUp className='size-6' weight='bold' aria-hidden />
+                </div>
+                <div>
+                  <p className='font-medium'>
+                    Drop your contract here, or{' '}
+                    <span className='text-primary'>browse files</span>
+                  </p>
+                  <p className='text-muted-foreground mt-1 text-xs'>
+                    PDF, Word, or text · max 10 MB · analyzed in memory, never
+                    stored
+                  </p>
+                </div>
+              </div>
+              <input
+                ref={inputRef}
+                type='file'
+                accept='.pdf,.docx,.doc,.txt,.md'
+                className='hidden'
+                onChange={(e) => pick(e.target.files)}
+              />
+            </>
+          ) : (
+            <div className='mt-4'>
+              <textarea
+                value={text}
+                onChange={(e) => setText(e.target.value)}
+                placeholder='Paste the full contract text here — copy it straight from your document…'
+                rows={10}
+                className='border-border bg-card/60 focus-visible:ring-ring w-full resize-y rounded-2xl border p-4 text-sm leading-relaxed backdrop-blur-sm focus-visible:ring-2 focus-visible:outline-none'
+              />
+              <div className='mt-3 flex items-center justify-between'>
+                <span className='text-muted-foreground text-xs tabular-nums'>
+                  {text.trim().length} characters
+                </span>
+                <Button
+                  onClick={() => onAnalyzeText(text)}
+                  disabled={text.trim().length < 120}
+                  className='gap-2'
+                >
+                  <PaperPlaneTilt className='size-4' weight='bold' />
+                  Check this contract
+                </Button>
+              </div>
             </div>
-            <div>
-              <p className='font-medium'>
-                Drop your contract here, or{' '}
-                <span className='text-primary'>browse files</span>
-              </p>
-              <p className='text-muted-foreground mt-1 text-xs'>
-                Text-based PDF · max 10 MB · analyzed in memory, never stored
-              </p>
-            </div>
-          </div>
-          <input
-            ref={inputRef}
-            type='file'
-            accept='application/pdf'
-            className='hidden'
-            onChange={(e) => pick(e.target.files)}
-          />
+          )}
         </section>
 
         {/* Right: what gets checked */}

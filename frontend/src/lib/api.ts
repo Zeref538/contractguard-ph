@@ -17,10 +17,7 @@ export interface ComplianceReport {
   disclaimer: string
 }
 
-export async function analyzeContract(file: File): Promise<ComplianceReport> {
-  const form = new FormData()
-  form.append('file', file)
-  const res = await fetch(`${API_BASE}/analyze`, { method: 'POST', body: form })
+async function parse(res: Response): Promise<ComplianceReport> {
   if (!res.ok) {
     const detail = await res
       .json()
@@ -29,4 +26,20 @@ export async function analyzeContract(file: File): Promise<ComplianceReport> {
     throw new Error(detail || 'Analysis failed')
   }
   return res.json()
+}
+
+export async function analyzeContract(file: File): Promise<ComplianceReport> {
+  const form = new FormData()
+  form.append('file', file)
+  return parse(await fetch(`${API_BASE}/analyze`, { method: 'POST', body: form }))
+}
+
+export async function analyzeText(text: string): Promise<ComplianceReport> {
+  return parse(
+    await fetch(`${API_BASE}/analyze-text`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text }),
+    })
+  )
 }

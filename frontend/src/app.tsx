@@ -1,6 +1,10 @@
 import { useEffect, useRef, useState } from 'react'
 import { List } from '@phosphor-icons/react'
-import { analyzeContract, type ComplianceReport } from './lib/api'
+import {
+  analyzeContract,
+  analyzeText,
+  type ComplianceReport,
+} from './lib/api'
 import { useAuth } from './lib/auth'
 import {
   addHistory,
@@ -31,12 +35,12 @@ export function App() {
 
   if (!user) return <SignInScreen />
 
-  async function handleUpload(file: File) {
+  async function run(fn: () => Promise<ComplianceReport>) {
     setLoading(true)
     setError(null)
     abortRef.current = false
     try {
-      const result = await analyzeContract(file)
+      const result = await fn()
       if (abortRef.current) return
       const item = addHistory(user!.email, result)
       setHistory(loadHistory(user!.email))
@@ -49,6 +53,9 @@ export function App() {
       setLoading(false)
     }
   }
+
+  const handleUpload = (file: File) => run(() => analyzeContract(file))
+  const handleText = (text: string) => run(() => analyzeText(text))
 
   function newAnalysis() {
     abortRef.current = true
@@ -115,6 +122,7 @@ export function App() {
           ) : (
             <UploadScreen
               onUpload={handleUpload}
+              onAnalyzeText={handleText}
               loading={loading}
               error={error}
             />
