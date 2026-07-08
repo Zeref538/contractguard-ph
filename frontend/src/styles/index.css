@@ -15,10 +15,6 @@
   }
   body {
     @apply min-h-svh w-full bg-background text-foreground has-[div[data-variant='inset']]:bg-sidebar;
-    /* Bokeh field: soft out-of-focus orbs in indigo/violet over near-black */
-    background-image: var(--bokeh);
-    background-attachment: fixed;
-    background-repeat: no-repeat;
   }
 
   /* Override Radix scroll locking for sticky headers */
@@ -59,6 +55,28 @@
 
 @utility faded-bottom {
   @apply after:pointer-events-none after:absolute after:inset-s-0 after:bottom-0 after:hidden after:h-32 after:w-full after:rounded-b-2xl after:bg-[linear-gradient(180deg,transparent_10%,var(--background)_70%)] md:after:block;
+}
+
+/* Bokeh orbs — slow drift; mouse parallax applied via inline transform */
+@keyframes bokeh-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(22px, -28px) scale(1.06);
+  }
+  66% {
+    transform: translate(-18px, 20px) scale(0.96);
+  }
+}
+.bokeh-orb {
+  animation: bokeh-drift ease-in-out infinite;
+}
+@media (prefers-reduced-motion: reduce) {
+  .bokeh-orb {
+    animation: none;
+  }
 }
 
 /* Document-scanning loader */
