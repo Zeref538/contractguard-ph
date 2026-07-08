@@ -11,7 +11,7 @@ A RAG system that takes an uploaded Philippine employment contract (PDF), segmen
 ## Tech stack (locked)
 - LLM + embeddings: Azure OpenAI (GPT-4o-mini generation, text-embedding-3-small embeddings) via Azure AI Foundry, using student credit
 - Orchestration: LangChain (LCEL, Pydantic structured output)
-- Vector DB: Supabase pgvector
+- Vector DB: MongoDB Atlas Vector Search (changed from Supabase pgvector)
 - Backend: FastAPI, deployed on Hugging Face Spaces
 - Frontend: React + Vite, stripped-down shadcn-admin template (https://github.com/satnaing/shadcn-admin), deployed on Vercel
 - PDF parsing: PyMuPDF (contracts), requests + BeautifulSoup (scraping DOLE source PDFs)
@@ -21,7 +21,7 @@ A RAG system that takes an uploaded Philippine employment contract (PDF), segmen
 Contract PDF
     → PyMuPDF text extraction
     → LLM clause segmentation (structured output: [{clause_type, text}])
-    → Per-clause-type retriever (Supabase pgvector, filtered by clause_type)
+    → Per-clause-type retriever (MongoDB Atlas Vector Search, filtered by clause_type)
     → LangChain verdict chain (Pydantic schema: verdict, citation, explanation)
     → Structured JSON report → React table view
 ```
@@ -32,7 +32,7 @@ DOLE source PDFs (Labor Code, DOs, PD 851)
     → scrape/download
     → parse into rule chunks (article #, title, text, clause_category tag)
     → manual review/clean pass
-    → embed (Azure OpenAI) → Supabase pgvector
+    → embed (Azure OpenAI) → MongoDB Atlas Vector Search
 ```
 
 ## Week-by-week task breakdown
@@ -44,12 +44,12 @@ DOLE source PDFs (Labor Code, DOs, PD 851)
 - [ ] Manually review and clean the auto-parsed chunks — fix OCR errors, merge fragmented articles, discard irrelevant chunks
 - [ ] Finalize ~50-100 rule entries as a JSON file (source of truth before embedding)
 - [ ] Generate embeddings via Azure OpenAI text-embedding-3-small
-- [ ] Load rules + embeddings into Supabase pgvector, indexed by clause_category
+- [ ] Load rules + embeddings into MongoDB Atlas, vector index filterable by clause_category
 
 ### Week 2 — Core pipeline
 - [ ] Build contract PDF ingestion (PyMuPDF text extraction, handle multi-page contracts)
 - [ ] Build clause segmentation chain: prompt Azure OpenAI (via LangChain) to split raw contract text into typed clauses, structured output validated against a Pydantic model
-- [ ] Build per-clause-type retriever: for each segmented clause, query Supabase pgvector filtered to that clause's category only (not a global search)
+- [ ] Build per-clause-type retriever: for each segmented clause, query MongoDB Atlas Vector Search filtered to that clause's category only (not a global search)
 - [ ] Build verdict generation chain: given a clause + retrieved rule(s), output {verdict, citation, explanation} via Pydantic structured output, enforcing citation is always present
 - [ ] Handle the "missing clause" case: if a required clause_category (e.g., 13th month pay) is never found in the segmented output, auto-flag as Missing without needing retrieval
 

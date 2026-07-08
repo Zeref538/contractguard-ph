@@ -16,14 +16,14 @@ for every verdict.
 Contract PDF
     → PyMuPDF text extraction
     → LLM clause segmentation (GPT-4o-mini, Pydantic structured output)
-    → per-clause-type retrieval (Supabase pgvector, category-filtered)
+    → per-clause-type retrieval (MongoDB Atlas Vector Search, category-filtered)
     → verdict chain (verdict + citation + explanation, citation enforced)
     → fixed-schema JSON report → React table view
 ```
 
 Knowledge base (built once): official statute texts scraped from LawPhil →
 parsed into 50 tagged rule chunks (`kb/rules/rules.json`) → embedded with
-`text-embedding-3-small` → Supabase pgvector, indexed by clause category.
+`text-embedding-3-small` → MongoDB Atlas Vector Search, filterable by clause category.
 
 **Sources:** Labor Code (PD 442, dual original/renumbered citations), PD 851 +
 IRR (13th-month pay), RA 11199 (SSS), RA 11223 (PhilHealth), RA 9679
@@ -31,8 +31,8 @@ IRR (13th-month pay), RA 11199 (SSS), RA 11223 (PhilHealth), RA 9679
 
 ## Stack
 
-Azure OpenAI (GPT-4o-mini + text-embedding-3-small) · LangChain · Supabase
-pgvector · FastAPI on Hugging Face Spaces · React + Vite (stripped
+Azure OpenAI (GPT-4o-mini + text-embedding-3-small) · LangChain · MongoDB
+Atlas Vector Search · FastAPI on Hugging Face Spaces · React + Vite (stripped
 [shadcn-admin](https://github.com/satnaing/shadcn-admin)) on Vercel.
 
 ## Evaluation
@@ -57,7 +57,7 @@ Reproduce: `uv run python eval/run_eval.py`
 uv sync                                   # backend deps
 uv run python kb/scripts/fetch_sources.py # download statute texts
 uv run python kb/scripts/parse_rules.py   # build kb/rules/rules.json
-# fill .env (see .env.example), run kb/supabase_schema.sql in Supabase, then:
+# fill .env (see .env.example), then:
 uv run python kb/scripts/embed_and_load.py
 uv run uvicorn app.main:app --reload      # backend on :8000
 

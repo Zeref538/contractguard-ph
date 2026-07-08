@@ -1,4 +1,4 @@
-"""Pipeline unit tests using fakes — no Azure/Supabase credentials needed."""
+"""Pipeline unit tests using fakes — no Azure/MongoDB credentials needed."""
 
 import fitz
 import pytest

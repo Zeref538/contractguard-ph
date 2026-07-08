@@ -5,7 +5,8 @@ from functools import lru_cache
 
 from dotenv import load_dotenv
 from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
-from supabase import Client, create_client
+from pymongo import MongoClient
+from pymongo.collection import Collection
 
 load_dotenv()
 
@@ -34,7 +35,6 @@ def get_embeddings() -> AzureOpenAIEmbeddings:
 
 
 @lru_cache
-def get_supabase() -> Client:
-    return create_client(
-        os.environ["SUPABASE_URL"], os.environ["SUPABASE_SERVICE_ROLE_KEY"]
-    )
+def get_rules_collection() -> Collection:
+    client = MongoClient(os.environ["MONGODB_URI"])
+    return client["contractguard"]["rules"]

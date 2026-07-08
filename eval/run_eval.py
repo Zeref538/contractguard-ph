@@ -7,7 +7,7 @@ Metrics:
                       real entry in kb/rules/rules.json
 
 Usage: uv run python eval/run_eval.py [--limit N]
-Requires a filled .env (live Azure + Supabase calls).
+Requires a filled .env (live Azure + MongoDB Atlas calls).
 """
 
 import argparse
