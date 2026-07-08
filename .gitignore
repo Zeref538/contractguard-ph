@@ -1,0 +1,8 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+kb/raw/
+LaborCodeofthePhilippines20171.pdf
+node_modules/
+dist/
