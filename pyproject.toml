@@ -1,7 +1,7 @@
 [project]
-name = "contractguard-ph"
+name = "aegix-ai"
 version = "0.1.0"
-description = "Add your description here"
+description = "Aegix AI — Philippine employment contract compliance checker"
 requires-python = ">=3.12"
 dependencies = [
     "beautifulsoup4>=4.15.0",

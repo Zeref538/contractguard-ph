@@ -9,6 +9,49 @@ resolution-markers = [
 ]
 
 [[package]]
+name = "aegix-ai"
+version = "0.1.0"
+source = { virtual = "." }
+dependencies = [
+    { name = "beautifulsoup4" },
+    { name = "fastapi" },
+    { name = "langchain" },
+    { name = "langchain-openai" },
+    { name = "markitdown", extra = ["docx"] },
+    { name = "openai" },
+    { name = "pymongo" },
+    { name = "pymupdf" },
+    { name = "python-dotenv" },
+    { name = "python-multipart" },
+    { name = "requests" },
+    { name = "uvicorn" },
+]
+
+[package.dev-dependencies]
+dev = [
+    { name = "pytest" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "beautifulsoup4", specifier = ">=4.15.0" },
+    { name = "fastapi", specifier = ">=0.139.0" },
+    { name = "langchain", specifier = ">=1.3.11" },
+    { name = "langchain-openai", specifier = ">=1.3.3" },
+    { name = "markitdown", extras = ["docx"], specifier = ">=0.1.6" },
+    { name = "openai", specifier = ">=2.44.0" },
+    { name = "pymongo", specifier = ">=4.17.0" },
+    { name = "pymupdf", specifier = ">=1.28.0" },
+    { name = "python-dotenv", specifier = ">=1.2.2" },
+    { name = "python-multipart", specifier = ">=0.0.32" },
+    { name = "requests", specifier = ">=2.34.2" },
+    { name = "uvicorn", specifier = ">=0.50.2" },
+]
+
+[package.metadata.requires-dev]
+dev = [{ name = "pytest", specifier = ">=9.1.1" }]
+
+[[package]]
 name = "annotated-doc"
 version = "0.0.4"
 source = { registry = "https://pypi.org/simple" }
@@ -163,49 +206,6 @@ sdist = { url = "https://files.pythonhosted.org/packages/cc/c7/eed8f27100517e8c0
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a7/06/3d6badcf13db419e25b07041d9c7b4a2c331d3f4e7134445ec5df57714cd/coloredlogs-15.0.1-py2.py3-none-any.whl", hash = "sha256:612ee75c546f53e92e70049c9dbfcc18c935a2b9a53b66085ce9ef6a6e5c0934", size = 46018, upload-time = "2021-06-11T10:22:42.561Z" },
 ]
-
-[[package]]
-name = "contractguard-ph"
-version = "0.1.0"
-source = { virtual = "." }
-dependencies = [
-    { name = "beautifulsoup4" },
-    { name = "fastapi" },
-    { name = "langchain" },
-    { name = "langchain-openai" },
-    { name = "markitdown", extra = ["docx"] },
-    { name = "openai" },
-    { name = "pymongo" },
-    { name = "pymupdf" },
-    { name = "python-dotenv" },
-    { name = "python-multipart" },
-    { name = "requests" },
-    { name = "uvicorn" },
-]
-
-[package.dev-dependencies]
-dev = [
-    { name = "pytest" },
-]
-
-[package.metadata]
-requires-dist = [
-    { name = "beautifulsoup4", specifier = ">=4.15.0" },
-    { name = "fastapi", specifier = ">=0.139.0" },
-    { name = "langchain", specifier = ">=1.3.11" },
-    { name = "langchain-openai", specifier = ">=1.3.3" },
-    { name = "markitdown", extras = ["docx"], specifier = ">=0.1.6" },
-    { name = "openai", specifier = ">=2.44.0" },
-    { name = "pymongo", specifier = ">=4.17.0" },
-    { name = "pymupdf", specifier = ">=1.28.0" },
-    { name = "python-dotenv", specifier = ">=1.2.2" },
-    { name = "python-multipart", specifier = ">=0.0.32" },
-    { name = "requests", specifier = ">=2.34.2" },
-    { name = "uvicorn", specifier = ">=0.50.2" },
-]
-
-[package.metadata.requires-dev]
-dev = [{ name = "pytest", specifier = ">=9.1.1" }]
 
 [[package]]
 name = "defusedxml"
