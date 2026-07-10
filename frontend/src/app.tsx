@@ -4,6 +4,8 @@ import {
   analyzeContract,
   analyzeText,
   type ComplianceReport,
+  type StreamEvent,
+  type Verdict,
 } from './lib/api'
 import { useAuth } from './lib/auth'
 import {
@@ -21,10 +23,37 @@ import { SignInScreen } from './screens/signin'
 import { UploadScreen } from './screens/upload'
 import { ReportScreen } from './screens/report'
 
+/** Live view of an in-flight analysis, rebuilt from the SSE event stream. */
+export interface Progress {
+  stage: 'segmenting' | 'judging'
+  total: number
+  clauses: { index: number; clause_type: string }[]
+  verdicts: Record<number, Verdict>
+}
+
+const INITIAL_PROGRESS: Progress = {
+  stage: 'segmenting',
+  total: 0,
+  clauses: [],
+  verdicts: {},
+}
+
+function reduceProgress(p: Progress, e: StreamEvent): Progress {
+  switch (e.type) {
+    case 'segmented':
+      return { ...p, stage: 'judging', total: e.total, clauses: e.clauses }
+    case 'verdict':
+      return { ...p, verdicts: { ...p.verdicts, [e.index]: e.clause.verdict } }
+    default:
+      return p
+  }
+}
+
 export function App() {
   const { user } = useAuth()
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [report, setReport] = useState<ComplianceReport | null>(null)
+  const [progress, setProgress] = useState<Progress>(INITIAL_PROGRESS)
   const [activeId, setActiveId] = useState<string | null>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -43,14 +72,22 @@ export function App() {
     abortRef.current = null
   }
 
-  async function run(fn: (signal: AbortSignal) => Promise<ComplianceReport>) {
+  async function run(
+    start: (
+      onEvent: (e: StreamEvent) => void,
+      signal: AbortSignal
+    ) => Promise<ComplianceReport>
+  ) {
     cancelPending()
     const controller = new AbortController()
     abortRef.current = controller
     setLoading(true)
     setError(null)
+    setProgress(INITIAL_PROGRESS)
     try {
-      const result = await fn(controller.signal)
+      const onEvent = (e: StreamEvent) =>
+        setProgress((p) => reduceProgress(p, e))
+      const result = await start(onEvent, controller.signal)
       const item = addHistory(user!.email, result)
       setHistory(loadHistory(user!.email))
       setReport(result)
@@ -68,9 +105,9 @@ export function App() {
   }
 
   const handleUpload = (file: File) =>
-    run((signal) => analyzeContract(file, signal))
+    run((onEvent, signal) => analyzeContract(file, onEvent, signal))
   const handleText = (text: string, title: string) =>
-    run((signal) => analyzeText(text, title, signal))
+    run((onEvent, signal) => analyzeText(text, title, onEvent, signal))
 
   function newAnalysis() {
     cancelPending()
@@ -150,6 +187,7 @@ export function App() {
               onUpload={handleUpload}
               onAnalyzeText={handleText}
               loading={loading}
+              progress={progress}
               error={error}
             />
           )}

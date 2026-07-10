@@ -30,6 +30,27 @@ single clause (~128s → ~62s on a 9-clause contract). Every LLM and embedding
 call retries transient failures (429 / 5xx / timeouts) with jittered backoff,
 but never retries a 400.
 
+### Streaming
+
+`POST /analyze/stream` and `/analyze-text/stream` return **Server-Sent Events**,
+emitting each verdict the moment its worker finishes rather than blocking for
+the full run:
+
+```
+event: stage      {"stage": "segmenting"}
+event: segmented  {"total": 7, "clauses": [{"index": 0, "clause_type": "probation"}, …]}
+event: verdict    {"index": 0, "clause": {…}}      ← arrives at ~47s
+event: verdict    {"index": 6, "clause": {…}}      ← out of order, by index
+…
+event: done       {"report": {…}}                  ← same fixed schema as /analyze
+```
+
+Workers complete out of order, so each verdict carries its index and the client
+reassembles contract order. The UI shows real findings resolving live instead of
+a spinner. Because the response commits a `200` before work begins, failures
+travel as a terminal `event: error` rather than an HTTP status. The blocking
+`/analyze` and `/analyze-text` endpoints remain for non-streaming clients.
+
 Knowledge base (built once): official statute texts scraped from LawPhil →
 parsed into 50 tagged rule chunks (`kb/rules/rules.json`) → embedded with
 `text-embedding-3-small` → MongoDB Atlas Vector Search, filterable by clause category.

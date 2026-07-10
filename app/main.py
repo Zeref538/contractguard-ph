@@ -1,17 +1,28 @@
 """FastAPI app: POST /analyze — upload a contract file, or POST /analyze-text."""
 
+import json
+import logging
 import os
 import time
 from collections import defaultdict, deque
+from typing import Iterator
 
 from fastapi import FastAPI, File, HTTPException, Request, UploadFile
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
 from app.ingest import EmptyPdfError
-from app.pipeline import analyze_contract, analyze_text
+from app.pipeline import (
+    analyze_contract,
+    analyze_contract_stream,
+    analyze_text,
+    analyze_text_stream,
+)
 from app.schemas import ComplianceReport
+
+log = logging.getLogger(__name__)
 
 MAX_BYTES = 10 * 1024 * 1024
 ALLOWED_EXTS = (".pdf", ".docx", ".doc", ".txt", ".md")
@@ -100,3 +111,58 @@ async def analyze_pasted(request: Request, req: TextRequest) -> ComplianceReport
         )
     except EmptyPdfError as e:
         raise HTTPException(422, str(e))
+
+
+# --------------------------------------------------------------- streaming
+
+def _sse(event: str, payload: dict) -> str:
+    return f"event: {event}\ndata: {json.dumps(payload)}\n\n"
+
+
+SSE_HEADERS = {
+    "Cache-Control": "no-cache",
+    "Connection": "keep-alive",
+    "X-Accel-Buffering": "no",  # stop nginx/HF proxies from buffering the stream
+}
+
+
+def _sse_stream(events: Iterator[tuple[str, dict]]) -> Iterator[str]:
+    """Wrap a pipeline generator, turning failures into a terminal error event.
+
+    Once the response has started we can no longer send an HTTP status code,
+    so errors must travel as SSE events.
+    """
+    try:
+        for event, payload in events:
+            yield _sse(event, payload)
+    except EmptyPdfError as e:
+        yield _sse("error", {"detail": str(e)})
+    except Exception:
+        log.exception("streaming analysis failed")
+        yield _sse("error", {"detail": "Analysis failed. Please try again."})
+
+
+# Starlette iterates sync generators in a threadpool, so the blocking pipeline
+# never runs on the event loop.
+@app.post("/analyze/stream")
+async def analyze_stream(request: Request, file: UploadFile = File(...)):
+    _rate_limit(request)
+    name = file.filename or "contract.pdf"
+    if not name.lower().endswith(ALLOWED_EXTS):
+        raise HTTPException(415, "Upload a PDF, Word (.docx), or text file.")
+    data = await _read_capped(file)
+    return StreamingResponse(
+        _sse_stream(analyze_contract_stream(data, name)),
+        media_type="text/event-stream",
+        headers=SSE_HEADERS,
+    )
+
+
+@app.post("/analyze-text/stream")
+async def analyze_text_stream_ep(request: Request, req: TextRequest):
+    _rate_limit(request)
+    return StreamingResponse(
+        _sse_stream(analyze_text_stream(req.text, req.filename or "Pasted text")),
+        media_type="text/event-stream",
+        headers=SSE_HEADERS,
+    )

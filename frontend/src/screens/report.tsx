@@ -8,6 +8,7 @@ import {
   ArrowCounterClockwise,
 } from '@phosphor-icons/react'
 import { Button } from '@/components/ui/button'
+import { CATEGORY_LABEL } from '@/lib/labels'
 import { cn } from '@/lib/utils'
 import type { ClauseReport, ComplianceReport, Verdict } from '@/lib/api'
 
@@ -58,15 +59,6 @@ const VERDICT_META: Record<
 
 const SEVERITY: Verdict[] = ['Non-compliant', 'Missing', 'Vague', 'Compliant']
 
-const CATEGORY_LABEL: Record<string, string> = {
-  probation: 'Probation period',
-  termination: 'Termination & notice',
-  pay: 'Pay & 13th month',
-  benefits: 'SSS · PhilHealth · Pag-IBIG',
-  hours: 'Hours & overtime',
-  ip: 'IP ownership',
-  dispute: 'Dispute resolution',
-}
 
 export function ReportScreen({
   report,

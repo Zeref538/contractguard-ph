@@ -79,10 +79,11 @@
   }
 }
 
-/* Document-scanning loader */
+/* Document-scanning loader. Percentage `top` keeps the beam in step with a
+   list whose height grows as clauses stream in. */
 @keyframes scan-sweep {
   0% {
-    transform: translateY(-28px);
+    top: -8%;
     opacity: 0;
   }
   8% {
@@ -92,7 +93,7 @@
     opacity: 1;
   }
   100% {
-    transform: translateY(272px);
+    top: 100%;
     opacity: 0;
   }
 }

@@ -26,12 +26,88 @@ def make_report(filename: str) -> ComplianceReport:
     )
 
 
+def fake_stream(filename: str):
+    yield "stage", {"stage": "segmenting"}
+    yield "segmented", {"total": 1, "clauses": [{"index": 0, "clause_type": "probation"}]}
+    report = make_report(filename)
+    yield "verdict", {"index": 0, "clause": report.clauses[0].model_dump(mode="json")}
+    yield "done", {"report": report.model_dump(mode="json")}
+
+
 @pytest.fixture
 def client(monkeypatch):
     monkeypatch.setattr(main, "analyze_contract", lambda data, name: make_report(name))
     monkeypatch.setattr(main, "analyze_text", lambda text, name: make_report(name))
+    monkeypatch.setattr(main, "analyze_contract_stream", lambda data, name: fake_stream(name))
+    monkeypatch.setattr(main, "analyze_text_stream", lambda text, name: fake_stream(name))
     main._hits.clear()  # rate limiter is process-global
     return TestClient(main.app)
+
+
+def parse_sse(body: str) -> list[tuple[str, dict]]:
+    import json
+
+    events = []
+    for block in body.strip().split("\n\n"):
+        name, data = "message", ""
+        for line in block.split("\n"):
+            if line.startswith("event:"):
+                name = line[6:].strip()
+            elif line.startswith("data:"):
+                data += line[5:].strip()
+        events.append((name, json.loads(data)))
+    return events
+
+
+def test_stream_emits_events_in_order(client):
+    r = client.post("/analyze-text/stream", json={"text": "x" * 200})
+    assert r.status_code == 200
+    assert r.headers["content-type"].startswith("text/event-stream")
+
+    events = parse_sse(r.text)
+    names = [n for n, _ in events]
+    assert names == ["stage", "segmented", "verdict", "done"]
+
+    verdict = dict(events)["verdict"]
+    assert verdict["index"] == 0
+    assert verdict["clause"]["verdict"] == "Compliant"
+
+    report = dict(events)["done"]["report"]
+    assert report["clauses"][0]["citation"]
+    assert "not legal advice" in report["disclaimer"].lower()
+
+
+def test_stream_upload_rejects_bad_extension(client):
+    r = client.post("/analyze/stream", files={"file": ("x.png", b"\x89PNG", "image/png")})
+    assert r.status_code == 415
+
+
+def test_stream_reports_failures_as_terminal_error_event(client, monkeypatch):
+    def boom(text, name):
+        yield "stage", {"stage": "segmenting"}
+        raise EmptyPdfError("scanned image")
+
+    monkeypatch.setattr(main, "analyze_text_stream", boom)
+    r = client.post("/analyze-text/stream", json={"text": "x" * 200})
+
+    # Status is already 200 by the time the failure happens — it must arrive
+    # as an SSE error event rather than an HTTP status.
+    assert r.status_code == 200
+    name, payload = parse_sse(r.text)[-1]
+    assert name == "error"
+    assert payload["detail"] == "scanned image"
+
+
+def test_stream_hides_unexpected_errors_from_clients(client, monkeypatch):
+    def boom(text, name):
+        raise RuntimeError("mongo credentials in the message")
+        yield  # pragma: no cover
+
+    monkeypatch.setattr(main, "analyze_text_stream", boom)
+    r = client.post("/analyze-text/stream", json={"text": "x" * 200})
+    name, payload = parse_sse(r.text)[-1]
+    assert name == "error"
+    assert "mongo credentials" not in payload["detail"]
 
 
 def test_health(client):

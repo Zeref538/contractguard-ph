@@ -17,12 +17,14 @@ import {
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import { Button } from '@/components/ui/button'
 import { ScanningLoader } from '@/components/scanning-loader'
+import type { Progress } from '@/app'
 import { cn } from '@/lib/utils'
 
 interface Props {
   onUpload: (file: File) => void
   onAnalyzeText: (text: string, title: string) => void
   loading: boolean
+  progress: Progress
   error: string | null
 }
 
@@ -67,6 +69,7 @@ export function UploadScreen({
   onUpload,
   onAnalyzeText,
   loading,
+  progress,
   error,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
@@ -85,7 +88,7 @@ export function UploadScreen({
     if (!loading) pick(e.dataTransfer.files)
   }
 
-  if (loading) return <ScanningLoader />
+  if (loading) return <ScanningLoader progress={progress} />
 
   return (
     <div className='space-y-10'>

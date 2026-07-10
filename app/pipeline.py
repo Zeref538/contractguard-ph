@@ -1,6 +1,12 @@
-"""End-to-end analysis pipeline: document/text -> ComplianceReport."""
+"""End-to-end analysis pipeline: document/text -> ComplianceReport.
 
-from concurrent.futures import ThreadPoolExecutor
+Two entry points per input type:
+  analyze_*        blocking, returns the finished report
+  analyze_*_stream generator, yields (event, payload) as each clause resolves
+"""
+
+from concurrent.futures import ThreadPoolExecutor, as_completed
+from typing import Iterator
 
 from langchain_core.language_models import BaseChatModel
 
@@ -111,6 +117,66 @@ def _analyze(text: str, filename: str,
     # Contract order for present clauses, then deterministic Missing flags
     reports.extend(flag_missing(seen))
     return ComplianceReport(filename=filename, clauses=reports)
+
+
+Event = tuple[str, dict]
+
+
+def analyze_contract_stream(data: bytes, filename: str,
+                            llm: BaseChatModel | None = None) -> Iterator[Event]:
+    """Stream an uploaded document's analysis (PDF/DOCX/TXT)."""
+    yield from _analyze_stream(extract_text(data, filename), filename, llm)
+
+
+def analyze_text_stream(text: str, filename: str = "Pasted text",
+                        llm: BaseChatModel | None = None) -> Iterator[Event]:
+    """Stream analysis of contract text pasted directly by the user."""
+    yield from _analyze_stream(clean_pasted_text(text), filename, llm)
+
+
+def _analyze_stream(text: str, filename: str,
+                    llm: BaseChatModel | None) -> Iterator[Event]:
+    """Yield progress events, emitting each verdict as its worker completes.
+
+    Clauses finish out of order, so each verdict carries its index and the
+    client reassembles contract order. The final 'done' event carries the
+    same fixed-schema report the blocking endpoint returns.
+    """
+    yield "stage", {"stage": "segmenting"}
+    segmented = segment_contract(text, llm)
+
+    clauses = [c for c in segmented.clauses
+               if c.clause_type != ClauseCategory.other]
+    seen = {c.clause_type for c in clauses}
+
+    yield "segmented", {
+        "total": len(clauses),
+        "clauses": [
+            {"index": i, "clause_type": c.clause_type.value}
+            for i, c in enumerate(clauses)
+        ],
+    }
+
+    results: list[ClauseReport | None] = [None] * len(clauses)
+    if clauses:
+        workers = min(MAX_WORKERS, len(clauses))
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            futures = {
+                pool.submit(_judge_one, c, llm): i for i, c in enumerate(clauses)
+            }
+            for future in as_completed(futures):
+                i = futures[future]
+                report = future.result()  # re-raises worker errors here
+                results[i] = report
+                yield "verdict", {
+                    "index": i,
+                    "clause": report.model_dump(mode="json"),
+                }
+
+    missing = flag_missing(seen)
+    ordered = [r for r in results if r is not None] + missing
+    report = ComplianceReport(filename=filename, clauses=ordered)
+    yield "done", {"report": report.model_dump(mode="json")}
 
 
 def flag_missing(seen: set[ClauseCategory]) -> list[ClauseReport]:
