@@ -50,10 +50,6 @@ export function SignInScreen() {
     signIn(user)
   }
 
-  function guest() {
-    signIn({ name: 'Guest', email: 'guest@local' })
-  }
-
   return (
     <div className='mx-auto flex min-h-svh max-w-sm flex-col justify-center px-6 py-12'>
       <div className='mb-8 flex flex-col items-center text-center'>
@@ -153,10 +149,6 @@ export function SignInScreen() {
           {mode === 'signin' ? 'Sign in' : 'Create account'}
           <ArrowRight className='size-4' />
         </Button>
-
-        <p className='text-muted-foreground text-center text-xs'>
-          Demo mode — your account and history stay in this browser.
-        </p>
       </form>
 
       <div className='mt-5 flex flex-col items-center gap-3 text-sm'>
@@ -170,12 +162,6 @@ export function SignInScreen() {
           {mode === 'signin'
             ? "Don't have an account? Create one"
             : 'Already have an account? Sign in'}
-        </button>
-        <button
-          onClick={guest}
-          className='text-primary font-medium hover:underline'
-        >
-          Continue as guest
         </button>
       </div>
     </div>
