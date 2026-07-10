@@ -12,7 +12,7 @@ A RAG system that takes an uploaded Philippine employment contract (PDF), segmen
 - LLM + embeddings: Azure OpenAI (GPT-4o-mini generation, text-embedding-3-small embeddings) via Azure AI Foundry, using student credit
 - Orchestration: LangChain (LCEL, Pydantic structured output)
 - Vector DB: MongoDB Atlas Vector Search (changed from Supabase pgvector)
-- Backend: FastAPI, deployed on Hugging Face Spaces
+- Backend: FastAPI in Docker, deployed on Render (HF Spaces now needs PRO for Docker)
 - Frontend: React + Vite, stripped-down shadcn-admin template (https://github.com/satnaing/shadcn-admin), deployed on Vercel
 - PDF parsing: PyMuPDF (contracts), requests + BeautifulSoup (scraping DOLE source PDFs)
 
@@ -58,7 +58,7 @@ DOLE source PDFs (Labor Code, DOs, PD 851)
 - [ ] Hand-label expected verdicts + citations for each contract (ground truth eval set)
 - [ ] Write evaluator script: clause-detection precision/recall, citation accuracy (does the cited article actually exist and match), verdict accuracy against ground truth
 - [ ] Run eval, record baseline numbers
-- [ ] Build FastAPI endpoints: POST /analyze (upload PDF → structured JSON report), deploy to Hugging Face Spaces
+- [ ] Build FastAPI endpoints: POST /analyze (upload PDF → structured JSON report), deploy to Render
 - [ ] Fork shadcn-admin, strip to two screens: upload page, report view (table with clause/verdict/citation/explanation columns)
 - [ ] Wire frontend to backend API, deploy to Vercel
 
@@ -75,7 +75,7 @@ DOLE source PDFs (Labor Code, DOs, PD 851)
 - No legal advice disclaimer bypass — every report must state it is not a substitute for legal counsel
 
 ## Deliverables checklist
-- [ ] Working deployed demo (Vercel frontend + HF Spaces backend)
+- [ ] Working deployed demo (Vercel frontend + Render backend)
 - [ ] GitHub repo with clean README, architecture diagram, eval numbers
 - [ ] Eval report showing precision/recall/citation-accuracy metrics
 - [ ] Short demo video

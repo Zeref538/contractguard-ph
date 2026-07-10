@@ -62,7 +62,7 @@ IRR (13th-month pay), RA 11199 (SSS), RA 11223 (PhilHealth), RA 9679
 ## Stack
 
 Azure OpenAI (gpt-5-mini + text-embedding-3-small) · LangChain · MongoDB
-Atlas Vector Search · FastAPI on Hugging Face Spaces · React + Vite (stripped
+Atlas Vector Search · FastAPI in Docker on Render · React + Vite (stripped
 [shadcn-admin](https://github.com/satnaing/shadcn-admin)) on Vercel.
 
 ## Evaluation

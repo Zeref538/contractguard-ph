@@ -1,0 +1,27 @@
+services:
+  - type: web
+    name: aegix-ai-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    plan: free
+    region: singapore
+    healthCheckPath: /health
+    envVars:
+      # sync: false means Render prompts for the value and stores it encrypted,
+      # so no secret is ever committed here.
+      - key: AZURE_OPENAI_ENDPOINT
+        sync: false
+      - key: AZURE_OPENAI_API_KEY
+        sync: false
+      - key: MONGODB_URI
+        sync: false
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: AZURE_OPENAI_API_VERSION
+        value: 2024-12-01-preview
+      - key: AZURE_OPENAI_EMBED_DEPLOYMENT
+        value: text-embedding-3-small
+      - key: AZURE_OPENAI_CHAT_DEPLOYMENT
+        value: gpt-5-mini
+      - key: RATE_LIMIT_PER_HOUR
+        value: 20

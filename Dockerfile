@@ -1,4 +1,4 @@
-# Backend image for Hugging Face Spaces (Docker SDK, port 7860)
+# Backend image. Binds $PORT, which container hosts inject at runtime.
 FROM python:3.12-slim
 
 WORKDIR /code
@@ -11,6 +11,7 @@ RUN pip install --no-cache-dir uv \
 # The knowledge base lives in MongoDB Atlas at runtime; kb/ is build-time only.
 COPY app ./app
 
-ENV PORT=7860
-EXPOSE 7860
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "7860"]
+ENV PORT=8000
+EXPOSE 8000
+# Shell form so $PORT expands; hosts assign it and it is not known at build time.
+CMD uvicorn app.main:app --host 0.0.0.0 --port $PORT
