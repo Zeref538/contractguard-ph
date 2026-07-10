@@ -1,5 +1,7 @@
 """End-to-end analysis pipeline: document/text -> ComplianceReport."""
 
+from concurrent.futures import ThreadPoolExecutor
+
 from langchain_core.language_models import BaseChatModel
 
 from app.ingest import clean_pasted_text, extract_text
@@ -68,30 +70,43 @@ def analyze_text(text: str, filename: str = "Pasted text",
     return _analyze(clean_pasted_text(text), filename, llm)
 
 
+# Clauses are independent, and each is a few network round-trips (embed →
+# vector search → verdict). Running them concurrently turns a serial
+# sum-of-latencies into roughly the slowest single clause.
+MAX_WORKERS = 8
+
+
+def _judge_one(clause: Clause, llm: BaseChatModel | None) -> ClauseReport:
+    rules = retrieve_rules(clause.text, clause.clause_type)
+    verdict = judge_clause(clause, rules, llm)
+    if verdict.verdict == Verdict.missing:
+        # "Missing" is reserved for absent categories; a present clause the
+        # judge can't verify is Vague.
+        verdict.verdict = Verdict.vague
+    return ClauseReport(
+        clause_type=clause.clause_type,
+        clause_text=clause.text,
+        verdict=verdict.verdict,
+        citation=verdict.citation,
+        explanation=verdict.explanation,
+    )
+
+
 def _analyze(text: str, filename: str,
              llm: BaseChatModel | None) -> ComplianceReport:
     segmented = segment_contract(text, llm)
 
-    reports: list[ClauseReport] = []
-    seen: set[ClauseCategory] = set()
+    clauses = [c for c in segmented.clauses
+               if c.clause_type != ClauseCategory.other]  # 'other' is v1 scope
+    seen = {c.clause_type for c in clauses}
 
-    for clause in segmented.clauses:
-        if clause.clause_type == ClauseCategory.other:
-            continue  # out of scope for v1 verdicts
-        seen.add(clause.clause_type)
-        rules = retrieve_rules(clause.text, clause.clause_type)
-        verdict = judge_clause(clause, rules, llm)
-        if verdict.verdict == Verdict.missing:
-            # "Missing" is reserved for absent categories; a present clause
-            # the judge can't verify is Vague.
-            verdict.verdict = Verdict.vague
-        reports.append(ClauseReport(
-            clause_type=clause.clause_type,
-            clause_text=clause.text,
-            verdict=verdict.verdict,
-            citation=verdict.citation,
-            explanation=verdict.explanation,
-        ))
+    if clauses:
+        workers = min(MAX_WORKERS, len(clauses))
+        with ThreadPoolExecutor(max_workers=workers) as pool:
+            # map preserves input order, so the report follows contract order
+            reports = list(pool.map(lambda c: _judge_one(c, llm), clauses))
+    else:
+        reports = []
 
     # Contract order for present clauses, then deterministic Missing flags
     reports.extend(flag_missing(seen))

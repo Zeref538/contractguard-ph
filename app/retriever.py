@@ -4,32 +4,17 @@ Each segmented clause is matched only against rules tagged with its own
 clause_category (a $vectorSearch pre-filter) — never a global search.
 """
 
-import time
-
-from openai import NotFoundError
-
 from app.config import get_embeddings, get_rules_collection
+from app.retry import with_retry
 from app.schemas import ClauseCategory
 
 VECTOR_INDEX = "rules_vector_index"
 
 
-def _embed_with_retry(text: str, attempts: int = 4) -> list[float]:
-    # Freshly created Azure deployments intermittently 404 while propagating
-    for i in range(attempts):
-        try:
-            return get_embeddings().embed_query(text)
-        except NotFoundError:
-            if i == attempts - 1:
-                raise
-            time.sleep(3 * (i + 1))
-    raise AssertionError("unreachable")
-
-
 def retrieve_rules(clause_text: str, category: ClauseCategory,
                    match_count: int = 4) -> list[dict]:
     """Return the most relevant rules for a clause, category-filtered."""
-    embedding = _embed_with_retry(clause_text)
+    embedding = with_retry(lambda: get_embeddings().embed_query(clause_text))
     pipeline = [
         {
             "$vectorSearch": {
