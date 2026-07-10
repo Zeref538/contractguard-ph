@@ -185,9 +185,18 @@ export function Sidebar({
               onClick={() => setMenuOpen((o) => !o)}
               className='hover:bg-secondary/60 flex w-full items-center gap-3 rounded-lg px-1.5 py-1.5 text-left transition-colors'
             >
-              <div className='from-primary/70 to-primary/30 flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-semibold text-white'>
-                {initials(user)}
-              </div>
+              {user.avatarUrl ? (
+                <img
+                  src={user.avatarUrl}
+                  alt=''
+                  referrerPolicy='no-referrer'
+                  className='size-8 shrink-0 rounded-full object-cover'
+                />
+              ) : (
+                <div className='from-primary/70 to-primary/30 flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br text-xs font-semibold text-white'>
+                  {initials(user)}
+                </div>
+              )}
               <div className='min-w-0 flex-1'>
                 <p className='truncate text-sm font-medium'>{user.name}</p>
                 <p className='text-muted-foreground truncate text-xs'>
