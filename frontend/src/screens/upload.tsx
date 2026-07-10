@@ -21,9 +21,18 @@ import { cn } from '@/lib/utils'
 
 interface Props {
   onUpload: (file: File) => void
-  onAnalyzeText: (text: string) => void
+  onAnalyzeText: (text: string, title: string) => void
   loading: boolean
   error: string | null
+}
+
+/** Name a pasted contract by its first meaningful line, so history is scannable. */
+function titleFromText(text: string): string {
+  const line = text
+    .split('\n')
+    .map((l) => l.trim())
+    .find((l) => l.length > 3)
+  return line ? line.slice(0, 60) : 'Pasted contract'
 }
 
 const CHECKS = [
@@ -189,7 +198,7 @@ export function UploadScreen({
                   {text.trim().length} characters
                 </span>
                 <Button
-                  onClick={() => onAnalyzeText(text)}
+                  onClick={() => onAnalyzeText(text, titleFromText(text))}
                   disabled={text.trim().length < 120}
                   className='gap-2'
                 >

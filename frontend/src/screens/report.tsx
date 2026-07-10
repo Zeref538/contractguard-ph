@@ -86,8 +86,25 @@ export function ReportScreen({
   const ordered = [...report.clauses].sort(
     (a, b) => SEVERITY.indexOf(a.verdict) - SEVERITY.indexOf(b.verdict)
   )
+
+  // A contract can have several clauses of one category; number them so two
+  // cards don't share an identical heading.
+  const catTotals: Record<string, number> = {}
+  for (const c of report.clauses)
+    catTotals[c.clause_type] = (catTotals[c.clause_type] ?? 0) + 1
+  const seenSoFar: Record<string, number> = {}
+  const annotated = ordered.map((clause) => {
+    const total = catTotals[clause.clause_type]
+    seenSoFar[clause.clause_type] = (seenSoFar[clause.clause_type] ?? 0) + 1
+    const suffix =
+      total > 1 ? ` (${seenSoFar[clause.clause_type]} of ${total})` : ''
+    return { clause, suffix }
+  })
+
   const visible =
-    filter === 'All' ? ordered : ordered.filter((c) => c.verdict === filter)
+    filter === 'All'
+      ? annotated
+      : annotated.filter((a) => a.clause.verdict === filter)
 
   function toggle(v: Verdict) {
     setFilter((f) => (f === v ? 'All' : v))
@@ -183,8 +200,8 @@ export function ReportScreen({
 
       {/* Clause findings as readable cards */}
       <div className='space-y-4'>
-        {visible.map((clause, i) => (
-          <ClauseCard key={i} clause={clause} />
+        {visible.map(({ clause, suffix }, i) => (
+          <ClauseCard key={i} clause={clause} suffix={suffix} />
         ))}
       </div>
 
@@ -227,7 +244,13 @@ function FilterChip({
   )
 }
 
-function ClauseCard({ clause }: { clause: ClauseReport }) {
+function ClauseCard({
+  clause,
+  suffix,
+}: {
+  clause: ClauseReport
+  suffix: string
+}) {
   const meta = VERDICT_META[clause.verdict]
   const Icon = meta.icon
   return (
@@ -237,6 +260,11 @@ function ClauseCard({ clause }: { clause: ClauseReport }) {
         <div className='flex flex-wrap items-center justify-between gap-2'>
           <h3 className='text-base font-semibold tracking-tight'>
             {CATEGORY_LABEL[clause.clause_type] ?? clause.clause_type}
+            {suffix && (
+              <span className='text-muted-foreground font-normal'>
+                {suffix}
+              </span>
+            )}
           </h3>
           <span
             className={cn(

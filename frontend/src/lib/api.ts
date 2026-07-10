@@ -28,18 +28,28 @@ async function parse(res: Response): Promise<ComplianceReport> {
   return res.json()
 }
 
-export async function analyzeContract(file: File): Promise<ComplianceReport> {
+export async function analyzeContract(
+  file: File,
+  signal?: AbortSignal
+): Promise<ComplianceReport> {
   const form = new FormData()
   form.append('file', file)
-  return parse(await fetch(`${API_BASE}/analyze`, { method: 'POST', body: form }))
+  return parse(
+    await fetch(`${API_BASE}/analyze`, { method: 'POST', body: form, signal })
+  )
 }
 
-export async function analyzeText(text: string): Promise<ComplianceReport> {
+export async function analyzeText(
+  text: string,
+  filename?: string,
+  signal?: AbortSignal
+): Promise<ComplianceReport> {
   return parse(
     await fetch(`${API_BASE}/analyze-text`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ text }),
+      body: JSON.stringify({ text, filename }),
+      signal,
     })
   )
 }

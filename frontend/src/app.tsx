@@ -16,6 +16,7 @@ import {
 import { Sidebar } from './components/sidebar'
 import { LogoMark } from './components/logo'
 import { ThemeToggle } from './components/theme-toggle'
+import { ConfirmDialog } from './components/confirm-dialog'
 import { SignInScreen } from './screens/signin'
 import { UploadScreen } from './screens/upload'
 import { ReportScreen } from './screens/report'
@@ -28,7 +29,8 @@ export function App() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [sidebarOpen, setSidebarOpen] = useState(false)
-  const abortRef = useRef(false)
+  const [confirmClear, setConfirmClear] = useState(false)
+  const abortRef = useRef<AbortController | null>(null)
 
   useEffect(() => {
     if (user) setHistory(loadHistory(user.email))
@@ -36,30 +38,42 @@ export function App() {
 
   if (!user) return <SignInScreen />
 
-  async function run(fn: () => Promise<ComplianceReport>) {
+  function cancelPending() {
+    abortRef.current?.abort()
+    abortRef.current = null
+  }
+
+  async function run(fn: (signal: AbortSignal) => Promise<ComplianceReport>) {
+    cancelPending()
+    const controller = new AbortController()
+    abortRef.current = controller
     setLoading(true)
     setError(null)
-    abortRef.current = false
     try {
-      const result = await fn()
-      if (abortRef.current) return
+      const result = await fn(controller.signal)
       const item = addHistory(user!.email, result)
       setHistory(loadHistory(user!.email))
       setReport(result)
       setActiveId(item.id)
     } catch (e) {
-      if (!abortRef.current)
-        setError(e instanceof Error ? e.message : String(e))
+      // An aborted request is a user action, not an error to surface
+      if (controller.signal.aborted) return
+      setError(e instanceof Error ? e.message : String(e))
     } finally {
-      setLoading(false)
+      if (abortRef.current === controller) {
+        abortRef.current = null
+        setLoading(false)
+      }
     }
   }
 
-  const handleUpload = (file: File) => run(() => analyzeContract(file))
-  const handleText = (text: string) => run(() => analyzeText(text))
+  const handleUpload = (file: File) =>
+    run((signal) => analyzeContract(file, signal))
+  const handleText = (text: string, title: string) =>
+    run((signal) => analyzeText(text, title, signal))
 
   function newAnalysis() {
-    abortRef.current = true
+    cancelPending()
     setReport(null)
     setActiveId(null)
     setError(null)
@@ -68,7 +82,7 @@ export function App() {
   }
 
   function selectItem(item: HistoryItem) {
-    abortRef.current = true
+    cancelPending()
     setLoading(false)
     setError(null)
     setReport(item.report)
@@ -83,10 +97,10 @@ export function App() {
   }
 
   function clearAll() {
-    if (!confirm('Delete all analysis history? This cannot be undone.')) return
     clearHistory(user!.email)
     setHistory([])
     newAnalysis()
+    setConfirmClear(false)
   }
 
   return (
@@ -99,8 +113,18 @@ export function App() {
         onNew={newAnalysis}
         onSelect={selectItem}
         onDelete={removeItem}
-        onClearAll={clearAll}
+        onClearAll={() => setConfirmClear(true)}
       />
+
+      {confirmClear && (
+        <ConfirmDialog
+          title='Delete all history?'
+          body={`This permanently removes all ${history.length} saved analyses from this browser. It cannot be undone.`}
+          confirmLabel='Delete all'
+          onCancel={() => setConfirmClear(false)}
+          onConfirm={clearAll}
+        />
+      )}
 
       <div className='flex min-w-0 flex-1 flex-col'>
         <header className='border-border/60 bg-background/70 sticky top-0 z-30 flex items-center gap-3 border-b px-4 py-3 backdrop-blur-md md:hidden'>
