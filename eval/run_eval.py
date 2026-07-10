@@ -13,6 +13,7 @@ Requires a filled .env (live Azure + MongoDB Atlas calls).
 import argparse
 import json
 import sys
+from collections import defaultdict
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -21,7 +22,9 @@ sys.path.insert(0, str(ROOT))
 from app.pipeline import analyze_contract  # noqa: E402
 
 EVAL_DIR = ROOT / "eval"
-KNOWN_CITATION_TOKENS = None
+
+# Most severe first — used to collapse several clauses of one category.
+SEVERITY = ["Non-compliant", "Missing", "Vague", "Compliant"]
 
 
 def load_known_tokens() -> set[str]:
@@ -51,17 +54,28 @@ def main() -> None:
     cite_hits = cite_total = 0
     rows = []
 
+    duplicates = 0
+
     for name in names:
         pdf = (EVAL_DIR / "contracts" / f"{name}.pdf").read_bytes()
         report = analyze_contract(pdf, name + ".pdf")
-        got = {c.clause_type.value: c for c in report.clauses}
+
+        # A contract can yield several clauses of the same category (e.g. two
+        # benefits paragraphs). Group them — keying a dict by category would
+        # silently discard all but the last.
+        by_cat: dict[str, list] = defaultdict(list)
+        for c in report.clauses:
+            by_cat[c.clause_type.value].append(c)
+        duplicates += sum(len(v) - 1 for v in by_cat.values())
+
         truth = ground_truth[name]
 
         # Detection: category counted as "detected present" when the model
         # produced a non-Missing row; truth "present" = verdict != Missing.
         for cat, exp in truth.items():
+            clauses = by_cat.get(cat, [])
             expected_present = exp["verdict"] != "Missing"
-            model_present = cat in got and got[cat].verdict.value != "Missing"
+            model_present = any(c.verdict.value != "Missing" for c in clauses)
             if expected_present and model_present:
                 tp += 1
             elif not expected_present and model_present:
@@ -69,21 +83,31 @@ def main() -> None:
             elif expected_present and not model_present:
                 fn += 1
 
-            # Verdict + citation scored on every ground-truth category
-            if cat in got:
-                verdict_total += 1
-                ok = got[cat].verdict.value == exp["verdict"]
-                verdict_hits += ok
-                cite_total += 1
-                cite_ok = (
-                    exp["citation_must_contain"].lower()
-                    in got[cat].citation.lower()
-                    and citation_is_real(got[cat].citation, known)
-                )
-                cite_hits += cite_ok
-                rows.append((name, cat, exp["verdict"],
-                             got[cat].verdict.value, ok, cite_ok))
+            if not clauses:
+                continue
+
+            # The category's effective verdict is its most severe finding —
+            # that is what a reader acts on.
+            worst = min(clauses, key=lambda c: SEVERITY.index(c.verdict.value))
+            verdict_total += 1
+            ok = worst.verdict.value == exp["verdict"]
+            verdict_hits += ok
+
+            # Citation counts if ANY clause of the category cites correctly.
+            cite_total += 1
+            want = exp["citation_must_contain"].lower()
+            cite_ok = any(
+                want in c.citation.lower() and citation_is_real(c.citation, known)
+                for c in clauses
+            )
+            cite_hits += cite_ok
+            rows.append((name, cat, exp["verdict"],
+                         worst.verdict.value, ok, cite_ok))
         print(f"done {name}")
+
+    if duplicates:
+        print(f"\nnote: {duplicates} duplicate-category clauses were grouped "
+              f"(previously silently dropped)")
 
     precision = tp / (tp + fp) if tp + fp else 0.0
     recall = tp / (tp + fn) if tp + fn else 0.0
