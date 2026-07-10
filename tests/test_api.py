@@ -173,6 +173,32 @@ def test_rate_limit_blocks_after_quota(client, monkeypatch):
     assert r.status_code == 429
 
 
+def test_rate_limit_keys_on_forwarded_client_ip(client, monkeypatch):
+    # Behind the proxy every request shares request.client; visitors must be
+    # told apart by the proxy-appended X-Forwarded-For entry.
+    monkeypatch.setattr(main, "RATE_LIMIT", 1)
+    main._hits.clear()
+    payload = {"text": "x" * 200}
+    a = {"X-Forwarded-For": "203.0.113.7"}
+    b = {"X-Forwarded-For": "198.51.100.9"}
+    assert client.post("/analyze-text", json=payload, headers=a).status_code == 200
+    assert client.post("/analyze-text", json=payload, headers=a).status_code == 429
+    # A different visitor still has quota
+    assert client.post("/analyze-text", json=payload, headers=b).status_code == 200
+
+
+def test_rate_limit_ignores_spoofed_forwarded_prefix(client, monkeypatch):
+    # Clients can prepend fake entries; the proxy appends the real IP last.
+    # Rotating the fake prefix must not mint fresh quota.
+    monkeypatch.setattr(main, "RATE_LIMIT", 1)
+    main._hits.clear()
+    payload = {"text": "x" * 200}
+    first = {"X-Forwarded-For": "10.0.0.1, 203.0.113.7"}
+    spoofed = {"X-Forwarded-For": "10.99.99.99, 203.0.113.7"}
+    assert client.post("/analyze-text", json=payload, headers=first).status_code == 200
+    assert client.post("/analyze-text", json=payload, headers=spoofed).status_code == 429
+
+
 def test_report_always_carries_disclaimer(client):
     r = client.post("/analyze-text", json={"text": "x" * 200})
     assert "not legal advice" in r.json()["disclaimer"].lower()

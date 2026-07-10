@@ -49,8 +49,22 @@ app.add_middleware(
 _hits: dict[str, deque[float]] = defaultdict(deque)
 
 
+def _client_ip(request: Request) -> str:
+    """Real client IP, proxy-aware.
+
+    Behind Render's proxy `request.client` is the proxy, not the visitor.
+    The proxy appends the true client IP as the LAST X-Forwarded-For entry;
+    earlier entries arrive from the client and are spoofable, so only the
+    last one is trusted.
+    """
+    xff = request.headers.get("x-forwarded-for")
+    if xff:
+        return xff.rsplit(",", 1)[-1].strip()
+    return request.client.host if request.client else "unknown"
+
+
 def _rate_limit(request: Request) -> None:
-    ip = request.client.host if request.client else "unknown"
+    ip = _client_ip(request)
     now = time.monotonic()
     hits = _hits[ip]
     while hits and now - hits[0] > RATE_WINDOW:
